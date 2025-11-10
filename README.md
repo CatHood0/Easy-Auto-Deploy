@@ -4,6 +4,9 @@
 
 **Simplifica el despliegue de imagenes de Docker con una interfaz intuitiva en Flutter**
 
+> [!IMPORTANT]
+> En este momento me encuentro centrado en la creación de una versión CLI para esta aplicación, que mejore la compatibilidad entre Windows y Mac)
+
 ## 📖 Tabla de Contenidos
 
 - [Características](#-características)
