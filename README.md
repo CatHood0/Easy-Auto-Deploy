@@ -1,210 +1,183 @@
-# Easy Docker Deployment (alpha phase) 
-
 ![](/assets/app_main_screen.png)
 
-**Simplifica el despliegue de imagenes de Docker con una interfaz intuitiva en Flutter**
+TODO - Easy Auto Deploy
 
-> [!IMPORTANT]
-> En este momento me encuentro centrado en la creación de una versión CLI para esta aplicación, que mejore la compatibilidad entre Windows y Mac)
+FASE 1: ARQUITECTURA BASE
 
-## 📖 Tabla de Contenidos
+1.1. SISTEMA DE EVENTOS Y PIPELINE
 
-- [Características](#-características)
-- [Requisitos del Sistema](#-requisitos-del-sistema)
-- [Instalación](#-instalación)
-- [Guía de Uso](#-guía-de-uso)
-- [Solución de Problemas](#-solución-de-problemas)
-- [Desarrollo](#-desarrollo)
+· Definir arquitectura de eventos
+  · Crear DeploymentEvent base class
+  · Implementar EventBus para comunicación entre servicios
+  · Definir tipos de eventos: PostInitEvent, PreCloneEvent, PostDeployEvent, etc.
+  · Sistema de suscripción a eventos
+· Implementar Pipeline de Deployment
+  · Crear DeploymentPipeline abstract class
+  · Definir las 7 fases del pipeline
+  · Sistema de hooks pre/post ejecución
+  · Manejo de errores y rollback automático
+· Sistema de configuración YAML
+  · Parser de archivos YAML para configuración
+  · Validación de esquemas de configuración
+  · Sistema de templates de configuración
+  · Merge de configuraciones (base + entorno)
 
-## ✨ Características
+1.2. INFRAESTRUCTURA CLI
 
-### 🔄 Gestión de Repositorios
-<!-- - **Clonación automática** de repositorios Git -->
-<!-- - **Soporte para autenticación** (usuario/token) -->
-<!-- - **Selección de ramas** específicas -->
+· Setup de CLI Framework
+  · Configurar args package como base
+  · Crear Command base class con helpers
+  · Sistema de logging consistente (colores, niveles)
+  · Manejo de errores unificado y lo más user-friendly posible
+· Comandos Core de Proyecto
+  · project:create con validaciones y modo interactivo
+  · project:list con table output y filtros
+  · project:info con información detallada
+  · project:delete con confirmación
+· Sistema de Almacenamiento
+  · Guardar configuraciones en YAML
+  · Sistema de encriptación para datos sensibles (pensandolo)
+  · Backup automático de configuraciones (opcional)
+  · Migración de versiones de configuración (debería?)
 
-### 🐳 Gestión de Contenedores
-<!-- - **Despliegue automático** con Docker Compose -->
-<!-- - **Monitoreo en tiempo real** de logs -->
-<!-- - **Gestión de estado** (iniciar/detener/verificar) -->
-<!-- - **Verificación automática** de permisos y dependencias -->
+FASE 2: DEPLOYMENT ROBUSTO
 
-### 🛡️ Sistema de Configuración Segura
-<!-- - **Interfaz intuitiva** para variables de entorno -->
-<!-- - **Procesamiento de variables de entorno y comandos** de configuración -->
-<!-- - **Almacenamiento seguro** de credenciales sensibles (falta implementación de encriptación datos) -->
-<!-- - **Validación automática** de configuraciones requeridas -->
+2.1. PIPELINE DE DEPLOYMENT MEJORADO
 
-### 🔍 Diagnóstico Inteligente
-<!-- - **Verificación automática** de requisitos del sistema -->
-<!-- - **Verificación de conectividad** de red -->
-<!-- - **Sistema de mensajes de error** contextuales -->
-<!-- - **Detección de conflictos** de puertos -->
-<!-- - **Monitoreo de espacio** en disco -->
+· Implementar las 7 fases completas
+  · post-app-init (Una fase que no hace más que ejecutarse siempre que inicia la aplicación
+  · pre-clone: Verificación de requisitos
+  · clone: Clonación de repositorio
+  · post-clone: Procesamiento de templates
+  · pre-deploy: Verificaciones Docker
+  · deploy: Ejecución de docker-compose
+  · post-deploy: Health checks
+  · monitoring: Monitoreo continuo
+  
+2.2. SISTEMA DE COMANDOS PERSONALIZADOS
 
-## ⚙️ Requisitos del Sistema
+· Motor de Comandos
+  · Implementar Command base class
+  · Crear comandos: CreateCommand, MoveCommand, UpdateCommand, RenameCommand
+  · Sistema de variables y templates en comandos
+  · Ordenamiento y dependencias entre comandos
+· UI para Configuración de Comandos
+  · Editor visual de pipeline
+  · Drag & drop de etapas de deployment
+  · Configuración de variables por comando
+  · Validación en tiempo real
 
-### Requisitos Obligatorios
-- **Docker** ≥ 20.0
-- **Docker Compose** ≥ 2.0
-- **Git** ≥ 2.0
-- **Sistema operativo**: Linux (Testeado solo en Zorin 18). Actualmente no tenemos soporte para Windows o Mac aún. 
+FASE 3: INTERFAZ GRÁFICA
 
+3.1. GUI PRINCIPAL
 
-### Permisos Requeridos
-```bash
-# Agregar usuario al grupo docker (Linux)
-sudo usermod -aG docker $USER
-newgrp docker
+· Pantalla de Dashboard
+  · Lista de proyectos con estados
+  · Métricas de despliegues recientes
+  · Estado del sistema (Docker, recursos)
+  · Notificaciones y alertas
+· Gestión de Proyectos
+  · Crear/editar proyectos con formulario
+  · Configuración de variables de entorno
+  · Visualización de pipeline de deployment
+  · Historial de despliegues
+· Monitor en Tiempo Real
+  · Terminal de logs con seguimiento
+  · Estado de contenedores en tiempo real
+  · Métricas de recursos (CPU, memoria)
+  · Sistema de notificaciones push
 
-# Verificar instalación
-docker --version
-docker-compose --version
-git --version
-```
+3.2. INTEGRACIÓN CLI-GUI
 
-## 🚀 Instalación
+· Comunicación Bidireccional
+  · GUI ejecuta comandos CLI internamente
+  · CLI emite eventos para updates en GUI
+  · Sistema de estado compartido
+  · Sincronización de configuraciones
 
-### 1. Descargar la Aplicación
-Visita [releases](https://github.com/CatHood0/auto-deployment/releases) y descarga la versión para tu sistema operativo.
+🔧 FASE 4: SISTEMA DE INTEGRACIONES
 
-## 📖 Guía de Uso
+4.1. INTEGRACIONES CORE
 
-### 🔄 Flujo Básico de Despliegue
+· Sistema de Integraciones Modular
+  · Integration base class
+  · Sistema de registro y descubrimiento
+  · Configuración UI para integraciones
+  · Lifecycle management de integraciones
+· Integración Nginx
+  · Auto-configuración de reverse proxy
+  · Generación de config SSL automática
+  · Load balancing configuration
+  · Health checks de endpoints
+· Integración LSP Docker
+  · Client para Dockerfile LSP
+  · Auto-completado en editores
+  · Validación en tiempo real
+  · Quick-fixes automáticos
 
-#### 1. Clonar un Repositorio
-```
-📥 Clonación → ⚙️ Configuración → 🐳 Despliegue → 📊 Monitoreo
-```
+4.2. SISTEMA DE PLUGINS
 
-#### 2. Configurar Variables de Entorno
+· Arquitectura de Plugins
+  · Sistema de carga dinámica de plugins
+  · API para desarrolladores de plugins
+  · Sandboxing para seguridad
+  · Sistema de distribución de plugins
 
-**Variables típicas:**
-- Credenciales de base de datos
-- API Keys de servicios externos
-- Configuraciones de conexión
-- Secretos de aplicación
+🧪 FASE 5: TESTING Y CALIDAD
 
-#### 3. Configurar los comandos 
+5.1. TESTING COMPREHENSIVO
 
+· Unit Tests
+  · Tests para todos los servicios core
+  · Tests para comandos CLI
+  · Tests de parsers de configuración
+  · Mock de dependencias externas (Docker, Git)
+· Integration Tests
+  · Tests de pipeline completo
+  · Tests de deployment real en contenedores aislados
+  · Tests de UI con golden files
+  · Performance testing
+· End-to-End Tests
+  · Flujos completos de usuario
+  · Tests cross-platform (Windows, Linux, macOS)
+  · Tests de recuperación de errores
+  · Load testing
 
+5.2. CALIDAD DE CÓDIGO
 
-#### 4. Monitorear el Despliegue
-- **Logs en tiempo real**
-- **Estado de contenedores**
-- **Uso de recursos**
-- **Errores y advertencias**
+· Static Analysis
+  · Configurar linter (dart analyze)
+  · Configurar formatter (dart format)
+  · Análisis de código estático
+  · Métricas de calidad (cobertura, complejidad)
+· Documentación
+  · Documentación técnica (architectura)
+  · Documentación de usuario (guides)
+  · Documentación de API (plugins)
+  · Ejemplos y tutorials
 
-## 🛠️ Solución de Problemas
+🚀 FASE 6: PREPARACIÓN PARA PRODUCCIÓN
 
-### 🔍 Problemas Comunes y Soluciones
+6.1. EMPAQUETADO Y DISTRIBUCIÓN
 
-#### ❌ "Permisos de Docker insuficientes"
-```bash
-# Solución:
-sudo usermod -aG docker $USER
-newgrp docker
+· Build y Packaging
+  · Scripts de build para todas las plataformas
+  · Instaladores (deb, rpm, msi, pkg)
+  · Auto-update mechanism
+  · Code signing para distribuciones
 
-# Si el grupo docker no existe:
-sudo groupadd docker
-sudo systemctl restart docker
-```
+6.2. MONITOREO Y LOGGING
 
-#### ❌ "Docker no está ejecutándose"
-```bash
-# Solución:
-sudo systemctl start docker
-sudo systemctl enable docker
-```
+· Observabilidad
+  · Logging estructurado (JSON)
+  · Health checks del sistema
 
-#### ❌ "Error de clonación Git"
-- Verificar credenciales de acceso
-- Comprobar conexión a internet
-- Validar URL del repositorio
+MÉTRICAS DE PROGRESO
 
-#### ❌ "Conflicto de puertos"
+FUNCIONALIDADES PRINCIPALES
 
-_Aún no implementamos correctamente el manejo de este tipo casos_
-
-```bash
-# Verificar puertos en uso:
-sudo lsof -i :8080
-
-# Liberar puerto:
-sudo kill -9 $(sudo lsof -t -i:8080)
-```
-
-#### ❌ "Espacio en disco insuficiente"
-
-_Aún no implementamos correctamente el manejo de estos tipo de casos_
-
-```bash
-# Limpiar Docker:
-docker system prune -a
-
-# Ver espacio:
-df -h
-```
-
-### 📋 Verificación del Sistema
-
-La aplicación incluye un **diagnóstico automático** que verifica:
-
-- ✅ Conexión con Docker Daemon
-- ✅ Permisos de usuario
-- ✅ Conectividad de red
-<!-- - ✅ Espacio en disco disponible -->
-<!-- - ✅ Conflictos de puertos -->
-<!-- - ✅ Dependencias del sistema -->
-
-### 🏗️ Arquitectura de Servicios
-
-| Servicio | Función |
-|----------|---------|
-| **DockerService** | Gestión principal de contenedores |
-| **CommandExecuter** | Gestiona todas las tareas relacionadas con los comandos |
-| **GitInstallationChecker** | Verificación de Git |
-| **NetworkIssueResolver** | Diagnóstico de conectividad |
-| **PortConflictResolver** | Gestión de conflictos de puertos |
-
-## 🔧 Desarrollo
-
-### 🚀 Despliegue de la Aplicación
-
-```bash
-# Desarrollo
-flutter run -d <linux>
-
-# Build para producción
-flutter build linux  
-
-# Ejecutar tests
-flutter test
-```
-
-## 🤝 Contribución
-
-### Reportar Problemas
-1. Verificar que el problema no esté ya reportado
-2. Incluir logs de error y pasos para reproducir
-3. Especificar sistema operativo y versión (aunque solo manejamos Linux aún)
-
-### Sugerir Mejoras
-1. Describir el caso de uso
-2. Proponer implementación
-3. Incluir ejemplos si es posible
-
-## 🆘 Soporte
-
-### Documentación Adicional
-- [Guía de Docker](https://docs.docker.com/)
-- [Documentación de Flutter](https://flutter.dev/docs)
-
-<!-- ### Comunidad -->
-<!-- - 📧 Email: soporte@autodeployment.com -->
-<!-- - 💬 Discord: [Enlace al servidor] -->
-<!-- - 🐛 Issues: [GitHub Issues] -->
-
-<!-- **¿Listo para simplificar tus despliegues?** 🎉 -->
-
-<!-- [Descargar última versión] | [Ver demostración] | [Reportar problema] -->
+· MVP Funcional: CLI básica funcionando
+· Pipeline Completo: Deployment end-to-end robusto
+· GUI Operacional: Interfaz gráfica completa
+· Sistema Extensible: Plugins e integraciones
+· Production Ready: Testing completo y empaquetado
