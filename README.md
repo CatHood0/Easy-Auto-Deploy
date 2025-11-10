@@ -1,4 +1,4 @@
-# 🚀 Auto Deployment
+# Easy Docker Deployment (alpha phase) 
 
 ![](/assets/app_main_screen.png)
 
