@@ -17,13 +17,11 @@ elif [[ "$OSTYPE" == "cygwin" ]] || [[ "$OSTYPE" == "msys" ]] || [[ -n "$WSL_DIS
     if [[ -n "$WSL_DISTRO_NAME" ]]; then
         ./install.sh
     else
-        # En Git Bash/Cygwin, ejecutar el .bat
-        cmd //c install.bat
+      echo "Para instalar esta herramienta, debes asegurate de usar el instalador proporcionado en https://github.com/CatHood0/Easy-Auto-Deploy/releases"
     fi
 else
     echo "❌ Sistema no soportado: $OSTYPE"
     echo "💡 Ejecuta manualmente:"
     echo "   Linux/macOS: ./install.sh"
-    echo "   Windows: install.bat"
     exit 1
 fi
