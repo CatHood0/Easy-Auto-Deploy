@@ -1,0 +1,37 @@
+name: auto_deployment
+description: "Effortless Docker container deployment. Just connect your repository, adjust the settings, and have your app running on your network in no time."
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.4.3 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  sqflite: ^2.4.2
+  sqflite_common_ffi: ^2.3.6
+  path: ^1.9.1
+  string_validator: ^1.2.0
+  shared_preferences: ^2.5.3
+  path_provider: ^2.1.5
+  dropdown_button2: ^2.3.9
+  shimmer: ^3.0.0
+  sliver_tools: ^0.2.12
+  boxy: ^2.2.2
+  provider: ^6.1.5+1
+  bloc: ^9.1.0
+  flutter_bloc: ^9.1.1
+  flutter_md: ^0.0.8
+  collection: ^1.19.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  bloc_test: ^10.0.0
+
+flutter:
+  uses-material-design: true
