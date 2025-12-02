@@ -136,7 +136,7 @@ class DockerCompose {
 
   /// Returns the list of volumes
   List<Volume> volumes(String workspace) => ComposeVolumes().volumes(
-        workspace,
+        workspaceDirectory: workspace,
       );
 
   /// internal function to provide a consistent method of handling

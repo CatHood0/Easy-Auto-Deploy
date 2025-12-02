@@ -10,7 +10,7 @@ class ComposeVolumes extends Volumes {
 
   /// returns a list of containers.
   @override
-  List<Volume> volumes(String workspaceDirectory) {
+  List<Volume> volumes({String? workspaceDirectory}) {
     final List<Volume> volumeCache = <Volume>[];
 
     const String args =
