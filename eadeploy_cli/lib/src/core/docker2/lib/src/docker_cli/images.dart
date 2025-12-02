@@ -14,7 +14,7 @@ import 'image.dart';
 class Images {
   late final List<Image>? _imageCache;
 
-  static final _self = Images._internal();
+  static final Images _self = Images._internal();
 
   /// Returns a factory [Images]
   factory Images() => _self;
@@ -36,22 +36,22 @@ class Images {
   }
 
   List<Image> _loadImages() {
-    final images = <Image>[];
-    final lines = dockerRun('images',
+    final List<Image> images = <Image>[];
+    final List<String> lines = dockerRun('images',
             '''--format "table {{.ID}}|{{.Repository}}|{{.Tag}}|{{.CreatedAt}}|{{.Size}}"''')
         // remove the heading.
         .toList()
       ..removeAt(0);
 
-    for (final line in lines) {
-      final parts = line.split('|');
-      final imageid = parts[0];
-      final repositoryAndName = parts[1];
-      final tag = parts[2];
-      final created = parts[3];
-      final size = parts[4];
+    for (final String line in lines) {
+      final List<String> parts = line.split('|');
+      final String imageid = parts[0];
+      final String repositoryAndName = parts[1];
+      final String tag = parts[2];
+      final String created = parts[3];
+      final String size = parts[4];
 
-      final image = Image(
+      final Image image = Image(
           repositoryAndName: repositoryAndName,
           tag: tag,
           imageid: imageid,
@@ -87,9 +87,9 @@ class Images {
   ///
   /// Returns null if the image doesn't exist.
   Image? findByImageId(String imageid) {
-    final list = images;
+    final List<Image> list = images;
 
-    for (final image in list) {
+    for (final Image image in list) {
       if (imageid == image.imageid) {
         return image;
       }
@@ -113,7 +113,7 @@ class Images {
   /// ubuntu
   /// ubuntu:latest
   Image? findByName(String imageName) {
-    final list = findAllByName(imageName);
+    final List<Image> list = findAllByName(imageName);
     if (list.length > 1) {
       throw AmbiguousImageNameException(imageName);
     }
@@ -125,11 +125,11 @@ class Images {
 
   /// returns a list of images with the given [imageName]
   List<Image> findAllByName(String imageName) {
-    final match = Image.fromName(imageName);
+    final Image match = Image.fromName(imageName);
 
     verbose(() => 'Match ${match.repository} ${match.name} ${match.tag}');
 
-    final list = findByParts(
+    final List<Image> list = findByParts(
         repository: match.repository, name: match.name, tag: match.tag);
     return list;
   }
@@ -141,10 +141,10 @@ class Images {
       {required String? repository,
       required String name,
       required String? tag}) {
-    final list = images;
-    final found = <Image>[];
+    final List<Image> list = images;
+    final List<Image> found = <Image>[];
 
-    for (final image in list) {
+    for (final Image image in list) {
       if (image.isSame(repository: repository, name: name, tag: tag)) {
         found.add(image);
       }

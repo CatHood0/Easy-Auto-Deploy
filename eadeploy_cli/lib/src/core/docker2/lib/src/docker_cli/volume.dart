@@ -66,11 +66,13 @@ class Volume {
   /// otherwise docker will generate a random uuid for the name.
   /// If an error occurs a [VolumeCreateException] is thrown
   static Volume create({String? name, String driver = 'local'}) {
-    final givenName =
-        dockerRun('volume', 'create ${name ?? ''}  --driver $driver').first;
+    final String givenName =
+        dockerRun('volume', 'create ${name ?? ''}  --driver $driver')
+            .lines
+            .first;
 
     Volume? volume;
-    var retry = 10;
+    int retry = 10;
 
     /// The volume isn't always immediately visible so we wait a little.
     while (volume == null && retry > 0) {
@@ -82,7 +84,9 @@ class Volume {
     }
     if (volume == null) {
       throw VolumeCreateException(
-          'Unable to find the newly created volume $name');
+        'Unable to find the '
+        'newly created volume $name',
+      );
     }
 
     return volume;

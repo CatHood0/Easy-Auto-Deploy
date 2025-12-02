@@ -30,7 +30,7 @@ class ImageName {
   /// registry/repo/name:tag
   /// Any of the parts may be missing except for the [name].
   ImageName.fromName(String fullname) {
-    final parsed = _parseName(fullname);
+    final ImageName parsed = _parseName(fullname);
     name = parsed.name;
     repository = parsed.repository;
     registry = parsed.registry;
@@ -40,13 +40,13 @@ class ImageName {
   /// Constructs an [ImageName] from just its repo/name with an optional
   /// tag.
   ImageName.fromRepositoryAndName(String repositoryAndName, {String? tag}) {
-    var repositoryAndName0 = repositoryAndName;
+    String repositoryAndName0 = repositoryAndName;
 
     if (tag != null) {
       repositoryAndName0 += ':$tag';
     }
 
-    final parsed = _parseName(repositoryAndName0);
+    final ImageName parsed = _parseName(repositoryAndName0);
 
     name = parsed.name;
     repository = parsed.repository;
@@ -57,7 +57,7 @@ class ImageName {
   /// Returns the full name of the image.
   /// Any parts that we don't have are excluded.
   String get fullname {
-    var fname = '';
+    String fname = '';
     if (registry != null) {
       fname += '$registry/';
     }
@@ -98,13 +98,13 @@ class ImageName {
     verbose(() => fullname);
 
     if (fullname.contains('/')) {
-      var parts = fullname.split('/');
+      List<String> parts = fullname.split('/');
       if (parts.length == 3) {
         // we have registry/repo/name
         registry = parts[0];
         parts.removeAt(0);
       }
-      final repoOrRegistry = parts[0];
+      final String repoOrRegistry = parts[0];
       // If the part contains a dot then it must be
       // a domain name which is only valid for the
       // registry.
@@ -128,7 +128,7 @@ class ImageName {
       }
     } else {
       if (fullname.contains(':')) {
-        final parts = fullname.split(':');
+        final List<String> parts = fullname.split(':');
         name = parts[0];
         tag = parts[1];
       } else {

@@ -10,7 +10,7 @@ import 'volume.dart';
 
 /// Holds a list of Docker containers.
 class Volumes {
-  static final _self = Volumes._internal();
+  static final Volumes _self = Volumes._internal();
 
   /// Factory ctor
   factory Volumes() => _self;
@@ -19,25 +19,25 @@ class Volumes {
 
   /// returns a list of containers.
   List<Volume> volumes() {
-    final volumeCache = <Volume>[];
+    final List<Volume> volumeCache = <Volume>[];
 
-    const args =
+    const String args =
         '''ls --format "table {{.Name}}|{{.Driver}}|{{.Mountpoint}}|{{.Labels}}|{{.Scope}}"''';
 
-    final lines = dockerRun('volume', args)
+    final List<String> lines = dockerRun('volume', args)
         // remove the heading.
         .toList()
       ..removeAt(0);
 
-    for (final line in lines) {
-      final parts = line.split('|');
-      final name = parts[0];
-      final driver = parts[1];
-      final mountpoint = parts[2];
-      final labels = parts[3];
-      final scope = parts[4];
+    for (final String line in lines) {
+      final List<String> parts = line.split('|');
+      final String name = parts[0];
+      final String driver = parts[1];
+      final String mountpoint = parts[2];
+      final String labels = parts[3];
+      final String scope = parts[4];
 
-      final container = Volume(
+      final Volume container = Volume(
         name: name,
         driver: driver,
         mountpoint: mountpoint,
@@ -53,9 +53,9 @@ class Volumes {
   /// Finds and returns the volume with given name.
   /// Returns null if the volume doesn't exist.
   Volume? findByName(String name) {
-    final list = volumes();
+    final List<Volume> list = volumes();
 
-    for (final volume in list) {
+    for (final Volume volume in list) {
       if (name == volume.name) {
         return volume;
       }
@@ -64,15 +64,15 @@ class Volumes {
   }
 
   List<VolumeLabel> _splitLabels(String labelPairs) {
-    final labels = <VolumeLabel>[];
+    final List<VolumeLabel> labels = <VolumeLabel>[];
 
     if (labelPairs.trim().isEmpty) {
       return labels;
     }
-    final parts = labelPairs.split(',');
+    final List<String> parts = labelPairs.split(',');
 
-    for (final label in parts) {
-      final pair = label.split('=');
+    for (final String label in parts) {
+      final List<String> pair = label.split('=');
       if (pair.length != 2) {
         throw InvalidVolumeLabelException(label);
       }

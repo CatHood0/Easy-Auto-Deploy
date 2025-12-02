@@ -36,39 +36,43 @@ Image build({
   bool showProgress = true,
   bool buildx = false,
 }) {
-  final cleanArg = clean ? ' --no-cache' : '';
-  final pullArg = pull ? ' --pull' : '';
+  final String cleanArg = clean ? ' --no-cache' : '';
+  final String pullArg = pull ? ' --pull' : '';
 
   workingDirectory ??= pwd;
 
-  final tag =
-      tagName(repository: repository, imageName: imageName, version: version);
+  final String tag = tagName(
+    repository: repository,
+    imageName: imageName,
+    version: version,
+  );
 
-  final buildArgList = StringBuffer();
+  final StringBuffer buildArgList = StringBuffer();
   if (buildArgs.isNotEmpty) {
-    for (final arg in buildArgs) {
+    for (final String arg in buildArgs) {
       buildArgList.write('--build-arg $arg ');
     }
   }
 
   // When showProgress==true we show stdout+stderr; otherwise only stderr.
-  final progressSink = showProgress ? Progress.print() : Progress.printStdErr();
+  final Progress progressSink =
+      showProgress ? Progress.print() : Progress.printStdErr();
 
   // Use a single command string; for buildx we emit "buildx build".
-  final builder = buildx ? 'buildx build' : 'build';
+  final String builder = buildx ? 'buildx build' : 'build';
 
-  final cmd = 'docker $builder'
+  final String cmd = 'docker $builder'
       '$pullArg '
       '$buildArgList '
       '$cleanArg '
       '-t $tag -f $pathToDockerFile .';
 
-  final progress = cmd.start(
+  final Progress progress = cmd.start(
       workingDirectory: workingDirectory,
       nothrow: true, // we want to check exit code ourselves
       progress: progressSink);
 
-  final code = progress.exitCode;
+  final int? code = progress.exitCode;
   if (code != 0) {
     throw DockerBuildException(
       'Docker $builder failed (exit $code). Command:\n$cmd',
@@ -79,16 +83,17 @@ Image build({
   return Image.fromName(tag);
 }
 
-Image buildx(
-        {required String pathToDockerFile,
-        required String imageName,
-        required String version,
-        bool clean = false,
-        bool pull = false,
-        List<String> buildArgs = const <String>[],
-        String? repository,
-        String? workingDirectory,
-        bool showProgress = true}) =>
+Image buildx({
+  required String pathToDockerFile,
+  required String imageName,
+  required String version,
+  bool clean = false,
+  bool pull = false,
+  List<String> buildArgs = const <String>[],
+  String? repository,
+  String? workingDirectory,
+  bool showProgress = true,
+}) =>
     build(
         pathToDockerFile: pathToDockerFile,
         imageName: imageName,
@@ -104,10 +109,11 @@ Image buildx(
 /// Publishes the image to the repository defined in [image].
 /// Throws [DockerPushException] on any non-zero exit.
 void publish({required Image image, bool showProgress = true}) {
-  final progressSink = showProgress ? Progress.print() : Progress.printStdErr();
-  final cmd = 'docker push ${image.fullname}';
-  final progress = cmd.start(nothrow: true, progress: progressSink);
-  final code = progress.exitCode;
+  final Progress progressSink =
+      showProgress ? Progress.print() : Progress.printStdErr();
+  final String cmd = 'docker push ${image.fullname}';
+  final Progress progress = cmd.start(nothrow: true, progress: progressSink);
+  final int? code = progress.exitCode;
   if (code != 0) {
     throw DockerPushException(
       'Docker push failed (exit $code). Command:\n$cmd',

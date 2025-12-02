@@ -7,6 +7,7 @@
 export 'src/docker_cli/build.dart';
 export 'src/docker_cli/container.dart';
 export 'src/docker_cli/containers.dart';
+export 'src/docker_cli/docker_compose.dart';
 export 'src/docker_cli/docker.dart';
 export 'src/docker_cli/image.dart';
 export 'src/docker_cli/image_name.dart';

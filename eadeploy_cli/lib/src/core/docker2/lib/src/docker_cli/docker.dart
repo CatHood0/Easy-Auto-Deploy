@@ -6,14 +6,8 @@
 
 import 'package:dcli/dcli.dart';
 
-import 'container.dart';
-import 'containers.dart';
+import '../../docker2.dart';
 import 'exceptions.dart';
-import 'image.dart';
-import 'image_name.dart';
-import 'images.dart';
-import 'volume.dart';
-import 'volumes.dart';
 
 /// Top level class generally used as the starting point manage
 /// docker containers and images.
@@ -63,7 +57,7 @@ class Docker {
   /// ubuntu
   /// ubuntu:latest
   Image pull(String fullname) {
-    final imageName0 = ImageName.fromName(fullname);
+    final ImageName imageName0 = ImageName.fromName(fullname);
 
     Image? image = Image.fromName(imageName0.fullname)..pull();
     image = Images().findByName(imageName0.fullname);
@@ -98,7 +92,7 @@ class Docker {
       String? argString,
       List<String> environmentVars = const <String>[],
       bool daemon = true}) {
-    var cmdArgs = '';
+    String cmdArgs = '';
 
     if (args != null) {
       cmdArgs += ' ${args.join(' ')}';
@@ -107,14 +101,14 @@ class Docker {
       cmdArgs += ' $argString';
     }
 
-    final envVars = StringBuffer();
+    final StringBuffer envVars = StringBuffer();
     if (environmentVars.isNotEmpty) {
-      for (final env in environmentVars) {
+      for (final String env in environmentVars) {
         envVars.write('-e $env ');
       }
     }
 
-    var terminal = false;
+    bool terminal = false;
     if (!daemon) {
       cmdArgs = '--attach --interactive $cmdArgs';
       terminal = true;
@@ -133,18 +127,53 @@ class Docker {
 
   /// internal function to provide a consistent method of handling
   /// failed execution of the docker command.
-  List<String> _dockerRun(String cmd, String args, {bool terminal = false}) {
-    final progress = 'docker $cmd $args'
-        .start(nothrow: true, terminal: terminal, progress: Progress.capture());
-
+  Progress _dockerRun(
+    String cmd,
+    String args, {
+    bool terminal = false,
+    bool compose = false,
+    Progress? pr,
+    String? workspaceDirectory,
+  }) {
+    if (compose) {
+      return dockerComposeRun(
+        cmd,
+        args,
+        terminal: terminal,
+        pr: pr,
+        workspaceDirectory: workspaceDirectory,
+      );
+    }
+    final Progress progress = 'docker $cmd $args'.start(
+      nothrow: true,
+      terminal: terminal,
+      progress: pr ?? Progress.capture(),
+      workingDirectory: workspaceDirectory,
+    );
     if (progress.exitCode != 0) {
       throw DockerCommandFailed(
-          cmd, args, progress.exitCode!, progress.lines.join('\n'));
+        cmd,
+        args,
+        progress.exitCode!,
+        progress.lines.join('\n'),
+      );
     }
-    return progress.lines;
+    return progress;
   }
 }
 
 /// runs the passed docker command.
-List<String> dockerRun(String cmd, String args, {bool terminal = false}) =>
-    Docker()._dockerRun(cmd, args, terminal: terminal);
+Progress dockerRun(
+  String cmd,
+  String args, {
+  bool terminal = false,
+  Progress? pr,
+  String? workspaceDirectory,
+}) =>
+    Docker()._dockerRun(
+      cmd,
+      args,
+      terminal: terminal,
+      pr: pr,
+      workspaceDirectory: workspaceDirectory,
+    );

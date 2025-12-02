@@ -30,13 +30,13 @@ class Image {
   /// Note: this doesn't create a docker image just
   /// an in memory representation of one.
   /// Use [Docker().create] to create an image.
-  Image(
-      {required String repositoryAndName,
-      required String tag,
-      required this.imageid,
-      required this.created,
-      required this.size})
-      : _imageName =
+  Image({
+    required String repositoryAndName,
+    required String tag,
+    required this.imageid,
+    required this.created,
+    required this.size,
+  }) : _imageName =
             ImageName.fromRepositoryAndName(repositoryAndName, tag: tag);
 
   /// Creates an image with the given [imageName].
@@ -77,7 +77,8 @@ class Image {
   /// Returns true if the image exists locally.
   bool existsLocally() {
     try {
-      final result = dockerRun('image', 'inspect ${_imageName.fullname}');
+      final List<String> result =
+          dockerRun('image', 'inspect ${_imageName.fullname}').lines;
 
       // If dockerRun returns any lines, the image exists.
       return result.isNotEmpty;
@@ -101,13 +102,16 @@ class Image {
   /// The [args] and [argString] are appended to the command
   /// and allow you to add abitrary arguments.
   /// The [args] list is added before the [argString].
-  Container create(String containerName,
-      {List<String>? args, String? argString}) {
+  Container create(
+    String containerName, {
+    List<String>? args,
+    String? argString,
+  }) {
     if (Containers().findByName(containerName) != null) {
       throw ContainerExistsException(containerName);
     }
 
-    var cmdArgs = '--name $containerName $fullname';
+    String cmdArgs = '--name $containerName $fullname';
 
     if (args != null) {
       cmdArgs += ' ${args.join(' ')}';
@@ -116,11 +120,11 @@ class Image {
       cmdArgs += ' $argString';
     }
 
-    final lines = dockerRun('create', cmdArgs);
+    final List<String> lines = dockerRun('create', cmdArgs).lines;
 
-    final containerid = lines[0];
+    final String containerid = lines[0];
 
-    final container = Containers().findByContainerId(containerid);
+    final Container? container = Containers().findByContainerId(containerid);
 
     if (container == null) {
       throw ContainerNotFoundException();
@@ -136,11 +140,12 @@ class Image {
   /// This method allows you to do a partial match by
   /// passing only the components you want to match on.
   /// The [name] must be passed.
-  bool isSame(
-      {required String name,
-      String? registry,
-      String? repository,
-      String? tag}) {
+  bool isSame({
+    required String name,
+    String? registry,
+    String? repository,
+    String? tag,
+  }) {
     if (registry != null) {
       if (this.registry != registry) {
         return false;

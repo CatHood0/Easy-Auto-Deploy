@@ -1,14 +1,10 @@
 import 'dart:convert';
 
+import 'package:dcli/dcli.dart';
 import 'package:meta/meta.dart';
 
-import 'containers.dart';
-import 'docker.dart';
+import '../../docker2.dart';
 import 'exceptions.dart';
-import 'image.dart';
-import 'images.dart';
-import 'volume.dart';
-import 'volumes.dart';
 
 /// A docker container.
 @immutable
@@ -43,20 +39,22 @@ class Container {
 
   /// Creates a container from [image] binding the passed
   /// [Volume]s into the container.
-  factory Container.create(Image image,
-      {List<VolumeMount> volumes = const <VolumeMount>[],
-      bool readonly = false}) {
-    final volarg = StringBuffer();
+  factory Container.create(
+    Image image, {
+    List<VolumeMount> volumes = const <VolumeMount>[],
+    bool readonly = false,
+  }) {
+    final StringBuffer volarg = StringBuffer();
     if (volumes.isNotEmpty) {
-      for (final mount in volumes) {
-        final readonlyArg = readonly ? ',readonly' : '';
+      for (final VolumeMount mount in volumes) {
+        final String readonlyArg = readonly ? ',readonly' : '';
 
         volarg.write("--mount 'type=volume,source=${mount.volume.name}"
             ",destination=${mount.mountPath}$readonlyArg'");
       }
     }
-    final containerid =
-        dockerRun('container', 'create $volarg ${image.name}').first;
+    final String containerid =
+        dockerRun('container', 'create $volarg ${image.name}').lines.first;
 
     return Containers().findByContainerId(containerid)!;
   }
@@ -81,28 +79,32 @@ class Container {
 
   /// returns the list of volumes attached to this container.
   List<Volume> get volumes {
-    final volumes = <Volume>[];
+    final List<Volume> volumes = <Volume>[];
 
-    final line =
-        dockerRun('inspect', '$containerid --format "{{json .Mounts}}"').first;
+    final String line =
+        dockerRun('inspect', '$containerid --format "{{json .Mounts}}"')
+            .lines
+            .first;
 
     if (line == '[]') {
       return volumes;
     }
 
-    final list = jsonDecode(line) as List<dynamic>;
-    for (final v in list) {
+    final List<dynamic> list = jsonDecode(line) as List<dynamic>;
+    for (final dynamic v in list) {
       // it's json.
       // ignore: avoid_dynamic_calls
-      final type = v['Type'] as String;
+      final String type = v['Type'] as String;
       if (type == 'volume') {
         // it's json.
         // ignore: avoid_dynamic_calls
-        final name = v['Name']! as String;
-        final volume = Volumes().findByName(name);
+        final String name = v['Name']! as String;
+        final Volume? volume = Volumes().findByName(name);
         if (volume == null) {
           throw UnknownVolumeException(
-              'The container $containerid contains an unknown Volume $name');
+            'The container $containerid '
+            'contains an unknown Volume $name',
+          );
         }
         volumes.add(volume);
       }
@@ -119,12 +121,24 @@ class Container {
   /// we have the complete set of details.
   Image? get image => Images().findByImageId(imageid);
 
-  /// Tops tthe docker container if it is running.
+  /// Tops the docker container if it is running.
   /// If the container is not running then no action is taken.
-  void stop() {
-    if (isRunning) {
-      dockerRun('stop', containerid);
+  bool stop({
+    bool compose = false,
+    String? workspaceDirectory,
+  }) {
+    if (isRunning) return true;
+    if (compose) {
+      assert(workspaceDirectory != null, 'workspaceDirectory must be defined');
+      dockerComposeRun(
+        'stop',
+        '',
+        workspaceDirectory: workspaceDirectory,
+      );
+      return isStopped;
     }
+    dockerRun('stop', containerid);
+    return isStopped;
   }
 
   /// Starts a docker container.
@@ -136,12 +150,18 @@ class Container {
   /// The [args] and [argString] are appended to the command
   /// and allow you to add abitrary arguments.
   /// The [args] list is added before the [argString].
-  void start({List<String>? args, String? argString, bool daemon = true}) {
+  void start({
+    List<String>? args,
+    String? argString,
+    bool daemon = true,
+    bool compose = false,
+    String? workspaceDirectory,
+  }) {
     if (isRunning) {
       throw ContainerAlreadyRunning();
     }
 
-    var cmdArgs = containerid;
+    String cmdArgs = '';
 
     if (args != null) {
       cmdArgs += ' ${args.join(' ')}';
@@ -150,34 +170,135 @@ class Container {
       cmdArgs += ' $argString';
     }
 
-    var terminal = false;
+    bool terminal = false;
     if (!daemon) {
       cmdArgs = '--attach --interactive $cmdArgs';
       terminal = true;
     }
+
+    if (compose) {
+      dockerComposeRun(
+        'start',
+        cmdArgs,
+        workspaceDirectory: workspaceDirectory,
+      );
+      return;
+    }
+
     dockerRun('start', cmdArgs, terminal: terminal);
   }
 
   /// Returns true if the container is currently running.
   bool get isRunning =>
       dockerRun('container', "inspect -f '{{.State.Running}}' $containerid")
+          .lines
           .first ==
       'true';
 
+  /// Returns true if the container is currently stopped.
+  bool get isStopped =>
+      dockerRun('container', "inspect -f '{{.State.Running}}' $containerid")
+          .lines
+          .first ==
+      'false';
+
+  /// Kill the container process
+  ///
+  /// This feature is just supported by docker-compose
+  @experimental
+  bool kill({
+    required String workspaceDirectory,
+    bool compose = false,
+    String? containerId,
+  }) {
+    if (compose) {
+      assert(
+        workspaceDirectory.isNotEmpty,
+        'workspaceDirectory must '
+        'have a valid path to be '
+        'executed as expected',
+      );
+      dockerComposeRun(
+        'kill',
+        '-s SIGKILL',
+        workspaceDirectory: workspaceDirectory,
+      );
+      return isStopped;
+    }
+    assert(
+      containerId != null && containerId.isNotEmpty,
+      'containerId must be defined when '
+      'kill is executed by docker',
+    );
+
+    dockerRun(
+      'container',
+      'kill $containerId',
+      workspaceDirectory: workspaceDirectory,
+    );
+    return isStopped;
+  }
+
   /// deletes this docker container.
-  void delete() {
-    dockerRun('container', 'rm $containerid');
+  Progress? delete({
+    Progress? pr,
+    bool compose = false,
+    String? workspaceDir,
+    bool removeVolumes = false,
+  }) {
+    if (compose) {
+      assert(
+        workspaceDir != null,
+        'workspaceDirectory must '
+        'be defined to delete a '
+        'container with docker compose',
+      );
+      return dockerComposeRun(
+        'rm',
+        // stop services when required
+        // don't ask for confirmation
+        // and remove the volumes if [removeVolumes] is true
+        '-s -f ${removeVolumes ? '-v' : ''}',
+        workspaceDirectory: workspaceDir,
+        pr: pr,
+      );
+    }
+    return dockerRun(
+      'container',
+      'rm $containerid',
+      pr: pr,
+    );
   }
 
   /// writes this containers docker logs to the console
   /// If [limit] is 0 (the default) all log lines a output.
   /// If [limit] is > 0 then only the last [limit] lines are output.
-  void showLogs({int limit = 0}) {
-    var limitFlag = '';
-    if (limit != 0) {
-      limitFlag = '-n $limit';
+  Progress? showLogs({
+    int limit = 0,
+    bool compose = false,
+    String? workspaceDirectory,
+    Progress? pr,
+  }) {
+    String limitFlag = '';
+    if (limit != 0) limitFlag = '-n $limit';
+    if (compose) {
+      assert(
+          workspaceDirectory != null,
+          'workspaceDirectory must '
+          'be defined');
+
+      return dockerComposeRun(
+        'logs',
+        '$limitFlag $containerid',
+        pr: pr,
+        workspaceDirectory: workspaceDirectory,
+      );
     }
-    dockerRun('logs', '$limitFlag $containerid');
+    return dockerRun(
+      'logs',
+      '$limitFlag $containerid',
+      pr: pr,
+    );
   }
 
   /// Attaches to the running container and starts a bash command prompt.
